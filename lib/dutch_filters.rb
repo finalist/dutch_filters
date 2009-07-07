@@ -23,18 +23,26 @@ module DutchFilters
                            '0592', '0593', '0594', '0595', '0594', '0595',
                            '0596', '0597', '0598', '0599', '0800' ]
 
-        # Adds dutch zipcode filter to given attributes
+        DUTCH_STOP_WORDS = [  'van', 'der', 'en', 'de', 'den', 'des', 'op',
+                              'onder', 'aan', 'naast' ]
+
+        # Adds dutch zipcode filter to given attributes.
         def filters_dutch_zipcode(*args)
-          create_filter_method("filter_dutch_zipcode", args)
+          create_filtered_accessor("filter_dutch_zipcode", args)
         end
 
-        # Adds dutch telephone number filter to given attributes
+        # Adds dutch telephone number filter to given attributes.
         def filters_dutch_telephonenumber(*args)
-          create_filter_method("filter_dutch_telephonenumber", args)
+          create_filtered_accessor("filter_dutch_telephonenumber", args)
+        end
+
+        # Adds dutch name filtering. Can be used for full person names or streetnames.
+        def filters_dutch_name(*args)
+          create_filtered_accessor("filter_dutch_name", args)
         end
 
         private
-          def create_filter_method(filter, fields)
+          def create_filtered_accessor(filter, fields)
             fields = [fields] unless(fields.kind_of?(Array))
             fields.each do |field|
               define_method("#{field}") { send(filter, instance_variable_get("@#{field}")) }
@@ -55,6 +63,22 @@ module DutchFilters
             end
           end
 
+          def filter_dutch_name(name)
+            # titleize name
+            name = name.downcase.gsub(/([\\\-\s][a-z]|^[a-z])/) { |m| m.upcase }
+
+            # lowercase all stop words
+            name = name.split(/ /).collect { |p| filter_stopword(p) }.join(' ')
+
+            # replace S- with 's-
+            name.gsub(/^([sS])\-/, '`s-')
+          end
+
+          def filter_stopword(word)
+            return word.downcase if(DutchFilters::ActiveRecord::Base::ClassMethods::DUTCH_STOP_WORDS.include?(word.downcase))
+            word
+          end
+
           def filter_dutch_telephonenumber(number)
             return if(number.nil?)
 
@@ -65,7 +89,7 @@ module DutchFilters
             if(number =~ /^06/)
               net = '06'
               member = number[2..-1]
-            elsif(self::DUTCH_NETCODES.include?(number[0..3]))
+            elsif(DutchFilters::ActiveRecord::Base::ClassMethods::DUTCH_NETCODES.include?(number[0..3]))
               net = number[0..3]
               member = number[4..-1]
             else
