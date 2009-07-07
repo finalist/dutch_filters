@@ -1,13 +1,21 @@
-DutchFilters
-============
+= Dutch Filters
 
-Introduction goes here.
+Provides some filters for Dutch telephone, name and zipcode filtering:
+* Zipcode filtering / formatting
+* Telephone number filtering / formatting
+* Name filtering / formatting
 
+== Installation
 
-Example
-=======
+  ./script/plugin install git://github.com/finalist/dutch_filters.git
 
-Example goes here.
+== Using filters in your models
 
+  class Person < ActiveRecord::Base
+    filters_dutch_zipcode :zipcode
+    filters_dutch_telephonenumber :telephone, :mobile, :work
+    filters_dutch_name :visit_street, :billing_street
+  end
 
-Copyright (c) 2009 [name of plugin creator], released under the MIT license
+== Credits
+Copyright (c) 2009, Diederick Lawson - Finalist IT Group. Released under the MIT License.
